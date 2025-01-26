@@ -1,0 +1,101 @@
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+  import {
+    getMessaging,
+    getToken,
+    onMessage,
+  } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-messaging.js";
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBmKB1uQeOWXW8o-Q6t8_uX72OwtucFLio",
+    authDomain: "web-push-c25ff.firebaseapp.com",
+    projectId: "web-push-c25ff",
+    storageBucket: "web-push-c25ff.firebasestorage.app",
+    messagingSenderId: "516015126312",
+    appId: "1:516015126312:web:24031dd6072c4f47ff821d",
+    measurementId: "G-7HV9YKJBY4",
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const messaging = getMessaging(app);
+
+  //   // To get notification permission
+  Notification.requestPermission().then((permission) => {
+    if (permission === "granted") {
+      console.log("Notification permission granted.");
+    } else {
+      console.error("Notification permission denied.");
+    }
+  });
+
+  getToken(messaging, {
+    vapidKey:
+      "BLmittlKZ8GTl9ju7iBNx3JBsAomPzB9OoMA8RMnK7YCHdcxVGcpV5qZBCVJuXPtsgHE_ifbHdHpHbdTXhCNFqI",
+  })
+    .then((currentToken) => {
+      if (currentToken) {
+        console.log("Device Token:", currentToken);
+      } else {
+        console.error(
+          "No registration token available. Request permission to generate one."
+        );
+      }
+    })
+    .catch((err) => {
+      console.error("An error occurred while retrieving token. ", err);
+    });
+
+  function showNotification(notificationTitle, notificationOptions) {
+    const notification = new Notification(
+      notificationTitle,
+      notificationOptions
+    );
+    notification.onclick = () => {
+      window.open(notificationOptions.data?.url, "_blank").focus();
+    };
+  }
+
+  if (messaging) {
+    onMessage(messaging, (payload) => {
+      console.log("Message received:", payload);
+      const notificationTitle = payload.notification.title;
+      const notificationOptions = {
+        body: payload.notification.body,
+        icon: payload.data.icon,
+        data: payload.notification,
+      };
+      new Notification(notificationTitle, notificationOptions).onclick = () => {
+        window
+          .open(payload?.data?.url || "https://testfcm.online", "_blank")
+          .focus();
+      };
+    });
+  } else {
+    console.error(
+      "Messaging is not initialized. Cannot set onMessage handler."
+    );
+  }
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("/firebase-messaging-sw.js")
+      .then((registration) => {
+        console.log(
+          "Service Worker registered with scope:",
+          registration.scope
+        );
+      })
+      .catch((err) => {
+        console.error("Service Worker registration failed:", err);
+      });
+  }
+</script>
+
+// Add these links in your HTML file to test: //
+<a href="https://testfcm.online/" target="_blank">Test Push Notification</a> //
+<a href="https://testfcm.online/generate-device-token" target="_blank"
+  >Generate Device Token</a
+>
